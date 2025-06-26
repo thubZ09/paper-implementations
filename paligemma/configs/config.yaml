@@ -1,0 +1,110 @@
+#for T4 GPU with 16GB VRAM and 12GB RAM
+
+model:
+  name: "paligemma"
+  vision_encoder: "siglip-so400m-patch14-224"
+  language_model: "gemma-2b"
+  hidden_size: 2048
+  vision_tokens: 256
+  max_length: 512
+  vocab_size: 256000
+  
+  # Vision encoder settings
+  vision:
+    image_size: 224
+    patch_size: 14
+    num_channels: 3
+    hidden_size: 1152
+    num_hidden_layers: 27
+    num_attention_heads: 16
+    intermediate_size: 4304
+    
+  # Language model settings  
+  language:
+    vocab_size: 256000
+    hidden_size: 2048
+    intermediate_size: 16384
+    num_hidden_layers: 18
+    num_attention_heads: 16
+    num_key_value_heads: 16
+    head_dim: 128
+    max_position_embeddings: 8192
+    rms_norm_eps: 1e-6
+    rope_theta: 10000.0
+    attention_dropout: 0.0
+    
+training:
+  #for Colab (T4 GPU)
+  batch_size: 2  
+  gradient_accumulation_steps: 8 
+  learning_rate: 5e-5
+  num_epochs: 3
+  warmup_steps: 100
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  
+  #memory optimization
+  mixed_precision: true
+  gradient_checkpointing: true
+  dataloader_num_workers: 2
+  pin_memory: true
+  
+  #scheduler
+  scheduler: "cosine"
+  warmup_ratio: 0.1
+  
+  #logging
+  logging_steps: 10
+  eval_steps: 500
+  save_steps: 1000
+  
+data:
+  #config
+  dataset_name: "nlphuji/flickr30k"
+  image_column: "image"
+  text_column: "caption"
+  max_length: 512
+  
+  #processing
+  train_split: "train"
+  val_split: "test"
+  test_split: "test"
+  
+  #augmentation
+  do_resize: true
+  do_normalize: true
+  do_convert_rgb: true
+  
+  #preprocessing
+  image_mean: [0.5, 0.5, 0.5]
+  image_std: [0.5, 0.5, 0.5]
+  
+evaluation:
+  batch_size: 4
+  metrics: ["bleu", "rouge", "cider"]
+  generate_max_length: 100
+  num_beams: 4
+  
+inference:
+  batch_size: 1
+  max_new_tokens: 100
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true
+  num_beams: 1
+  
+paths:
+  output_dir: "./outputs"
+  cache_dir: "./cache"
+  log_dir: "./logs"
+  checkpoint_dir: "./checkpoints"
+  
+hardware:
+  device: "cuda"
+  mixed_precision: "fp16"
+  compile: false 
+  
+experiment:
+  name: "paligemma_colab_demo"
+  tags: ["paligemma", "vision-language", "colab"]
+  notes: "Training PaliGemma on Colab Free Tier"
