@@ -93,25 +93,41 @@ def create_dataloaders(
     num_workers: int = NUM_WORKERS
 ):
     """Creates training and testing DataLoaders for PaliGemma.
-    
+
     Args:
         train_dir: Path to training directory.
         test_dir: Path to testing directory.
         processor: PaliGemmaProcessor for tokenizing and preprocessing.
         batch_size: Number of samples per batch in each of the DataLoaders.
         num_workers: An integer for number of workers per DataLoader.
-    
+
     Returns:
         A tuple of (train_dataloader, test_dataloader, class_names).
         Where class_names is a list of the target classes.
     """
-    
-    # create datasets
+
+    # Create datasets
     train_dataset = PaliGemmaDataset(train_dir, processor, "train")
     test_dataset = PaliGemmaDataset(test_dir, processor, "test")
-    
-    # get class names from directory structure
-    class_names = [d for d in os.listdir(train_dir) 
+
+    # Create dataloaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True if torch.cuda.is_available() else False
+    )
+
+    class_names = [d for d in os.listdir(train_dir)
                    if os.path.isdir(os.path.join(train_dir, d))]
     
     def collate_fn(batch):
