@@ -1,7 +1,5 @@
 model:
   name: "paligemma"
-  vision_encoder: "siglip-so400m-patch14-224"
-  language_model: "google/paligemma-3b-pt-224"
   hidden_size: 2048
   vision_tokens: 256
   max_length: 512
@@ -36,7 +34,7 @@ training:
   num_epochs: 3
   warmup_steps: 100
   weight_decay: 0.01
-  max_grad_norm: 1.0
+  max_grad_norm: 1.0  
   mixed_precision: true
   gradient_checkpointing: true
   dataloader_num_workers: 2
