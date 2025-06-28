@@ -1,7 +1,7 @@
 model:
   name: "paligemma"
   vision_encoder: "siglip-so400m-patch14-224"
-  language_model: "gemma-2b"
+  language_model: "google/paligemma-3b-pt-224"
   hidden_size: 2048
   vision_tokens: 256
   max_length: 512
