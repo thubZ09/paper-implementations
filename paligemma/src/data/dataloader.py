@@ -7,7 +7,7 @@ import torch
 NUM_WORKERS = os.cpu_count()
 
 def read_flickr8k_captions(captions_file):
-    """Reads captions.txt and returns a dict: image -> [captions]"""
+    """reads captions.txt and returns a dict: image → [captions]"""
     from collections import defaultdict
     mapping = defaultdict(list)
     with open(captions_file, "r") as f:
@@ -18,12 +18,10 @@ def read_flickr8k_captions(captions_file):
     return dict(mapping)
 
 def read_split_list(split_file):
-    """Reads train/test/val split file, returns list of image filenames"""
     with open(split_file, "r") as f:
         return [line.strip() for line in f.readlines()]
 
 class Flickr8kDataset(Dataset):
-    """Dataset for Flickr8k from Kaggle, using images and captions files."""
 
     def __init__(self, images_dir, captions_dict, split_list, processor, max_length=128):
         """

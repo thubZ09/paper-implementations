@@ -1,0 +1,8 @@
+torch==2.0.1
+torchvision==0.15.2
+transformers==4.31.0
+datasets==2.14.4
+timm==0.9.5
+tqdm==4.66.1
+Pillow==10.0.0
+accelerate==0.21.0
