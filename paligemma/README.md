@@ -1,6 +1,6 @@
 # PaliGemma: A 3B Vision-Language Model 
 
-## 📄 Paper Overview
+## Paper Overview
 
 - **Authors**: Google Research Team
 - **Paper**: [arXiv:2407.07726](https://arxiv.org/abs/2407.07726)
@@ -8,7 +8,7 @@
 
 PaliGemma is a 3-billion parameter vision-language model that combines a SigLIP vision encoder with a Gemma language model. It's designed for a variety of vision-language tasks including image captioning, visual question answering, object detection, and optical character recognition.
 
-## 📌 Architecture
+## Architecture
 
 PaliGemma follows a standard vision-language model architecture with three main components:
 
@@ -42,7 +42,7 @@ PaliGemma follows a standard vision-language model architecture with three main 
   - Prefix LM attention pattern for vision tokens
   - Standard causal attention for text tokens
 
-### 👇Overall Architecture Flow
+### Overall Architecture Flow
 ```
 Input Image (224×224) 
     ↓
@@ -61,7 +61,7 @@ Gemma Language Model
 Output Text
 ```
 
-## 🔧 Training Process
+##  Training Process
 
 ### Stage 1: Unimodal Pre-training
 - **Vision Encoder**: Pre-trained SigLIP frozen
@@ -88,7 +88,7 @@ Output Text
 - **Image Resolution**: 224×224
 - **Training Steps**: ~1M steps
 
-## 📊 Eval & Performance
+## Eval & Performance
 
 ### Benchmark Results
 PaliGemma achieves competitive performance across multiple vision-language benchmarks:
@@ -107,7 +107,7 @@ PaliGemma achieves competitive performance across multiple vision-language bench
 - **Quality**: Strong performance despite smaller size
 - **Open Source**: Full model weights and training code available
 
-## 🔍 Implementation Details
+## Implementation Details
 
 ### Key Components
 
@@ -141,7 +141,7 @@ attention_mask = create_prefix_lm_mask(
 )
 ```
 
-## 🎯 Supported Tasks
+## Supported Tasks
 
 1. **Image Captioning**
    ```python
@@ -167,24 +167,7 @@ attention_mask = create_prefix_lm_mask(
    response = model.generate(image, prompt)
    ```
 
-## ⚙️ Configuration
-
-### Model Configuration
-```yaml
-model:
-  vision_encoder: "siglip-so400m-patch14-224"
-  language_model: "gemma-2b"
-  hidden_size: 2048
-  vision_tokens: 256
-  max_length: 512
-
-training:
-  batch_size: 32
-  learning_rate: 1e-5
-  num_epochs: 10
-  warmup_steps: 1000
-```
-## 📚 References
+## References
 
 1. **PaliGemma Paper**: [arXiv:2407.07726](https://arxiv.org/abs/2407.07726)
 2. **SigLIP Paper**: [arXiv:2303.15343](https://arxiv.org/abs/2303.15343)

@@ -24,14 +24,7 @@ def read_split_list(split_file):
 class Flickr8kDataset(Dataset):
 
     def __init__(self, images_dir, captions_dict, split_list, processor, max_length=128):
-        """
-        Args:
-            images_dir: path to JPEG images
-            captions_dict: dict mapping image filename to list of captions
-            split_list: list of image filenames for this split
-            processor: PaliGemmaProcessor
-            max_length: max token length
-        """
+
         self.images_dir = images_dir
         self.captions_dict = captions_dict
         self.split_list = split_list
@@ -52,7 +45,7 @@ class Flickr8kDataset(Dataset):
         img_path = os.path.join(self.images_dir, img_fname)
         image = Image.open(img_path).convert('RGB')
 
-        # Prompt design for multi-modal: you can modify as needed
+#prompt
         input_text = "Describe the image."
         target_text = caption
 
@@ -72,13 +65,13 @@ class Flickr8kDataset(Dataset):
             truncation=True,
             max_length=self.max_length
         )
-        # Remove batch dimension
+
         inputs = {k: v.squeeze(0) for k, v in inputs.items()}
         targets = {k: v.squeeze(0) for k, v in targets.items()}
         return inputs, targets
 
 def collate_fn(batch, processor):
-    """Pads a batch of examples for DataLoader"""
+    """Pads a batch of examples for dataLoader"""
     inputs_batch = [inputs for inputs, targets in batch]
     targets_batch = [targets for inputs, targets in batch]
     batch_inputs = processor.tokenizer.pad(
@@ -93,7 +86,7 @@ def create_dataloaders(
     config,
     processor,
 ):
-    """Creates train/val DataLoaders for Flickr8k Kaggle dataset using config dict."""
+    """creates train/val DataLoaders for Flickr8k dataset using config dict."""
 
     image_dir = config['data']['image_dir']
     captions_file = config['data']['captions_file']
@@ -126,6 +119,6 @@ def create_dataloaders(
         num_workers=num_workers, pin_memory=True, collate_fn=collate
     )
 
-    class_names = ["caption"]  # For Flickr8k, this is just a placeholder
+    class_names = ["caption"] 
 
     return train_loader, val_loader, class_names

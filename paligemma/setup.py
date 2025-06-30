@@ -1,16 +1,14 @@
 """
-Setup script for PaliGemma PyTorch implementation
+setup script for this implementation
 """
 
 from setuptools import setup, find_packages
 import os
 
-# Read the contents of README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# Read requirements from requirements.txt
 def read_requirements():
     with open('requirements.txt', 'r') as f:
         return [line.strip() for line in f if line.strip() and not line.startswith('#')]
@@ -18,12 +16,12 @@ def read_requirements():
 setup(
     name="paligemma-pytorch",
     version="0.1.0",
-    author="Yash Thube",
-    author_email="thubeyash09@gmail.com",
+    author="",
+    author_email="",
     description="A PyTorch implementation of PaliGemma: A 3B Vision-Language Model",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/thubZ09/paper-implementations.git",
+    url="",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -82,8 +80,8 @@ setup(
         "artificial-intelligence",
     ],
     project_urls={
-        "Bug Reports": "https://github.com/thubZ09/paper-implementations/issues",
-        "Source": "https://github.com/thubZ09/paper-implementations.git",
-        "Documentation": "https://github.com/thubZ09/paper-implementations/paligemma#readme",
+        "Bug Reports": "https://github.com/your usearname/repo/issues",
+        "Source": "https://github.com/username/repo.git",
+        "Documentation": "https://github.com/username/repo#readme",
     },
 )

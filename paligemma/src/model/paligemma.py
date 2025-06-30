@@ -4,9 +4,9 @@ from torch import nn
 from transformers import PaliGemmaForConditionalGeneration, PaliGemmaConfig
 
 class PaliGemmaModel(nn.Module):
-    """Creates a PaliGemma model for vision-language tasks.
+    """creates a PaliGemma model for vision-language tasks.
     
-    This class wraps the HuggingFace PaliGemma model and provides
+    this class wraps the HuggingFace PaliGemma model and provides
     additional functionality for fine-tuning and inference.
     
     Args:
@@ -23,12 +23,11 @@ class PaliGemmaModel(nn.Module):
         
         self.model_name = model_name
         self.num_classes = num_classes
-        
-        # Load the pre-trained PaliGemma model
+
         try:
             self.model = PaliGemmaForConditionalGeneration.from_pretrained(
                 model_name,
-                torch_dtype=torch.float16,  # Use half precision for memory efficiency
+                torch_dtype=torch.float16, 
                 device_map="auto",
                 trust_remote_code=True
             )
@@ -38,11 +37,11 @@ class PaliGemmaModel(nn.Module):
             config = PaliGemmaConfig.from_pretrained(model_name)
             self.model = PaliGemmaForConditionalGeneration(config)
         
-        # Freeze backbone if requested
+        #freeze backbone 
         if freeze_backbone:
             self.freeze_backbone_parameters()
         
-        # Add classification head if specified
+        #add classification head 
         if num_classes:
             self.classifier = nn.Linear(
                 self.model.config.text_config.hidden_size,
@@ -56,14 +55,14 @@ class PaliGemmaModel(nn.Module):
         for param in self.model.vision_tower.parameters():
             param.requires_grad = False
         
-        # Optionally freeze language model layers except the last few
+        #optional
         language_layers = self.model.language_model.model.layers
-        for layer in language_layers[:-2]:  # Keep last 2 layers trainable
+        for layer in language_layers[:-2]:  
             for param in layer.parameters():
                 param.requires_grad = False
     
     def forward(self, inputs):
-        """Forward pass through the PaliGemma model.
+        """forward pass through the PaliGemma model.
         
         Args:
             inputs: Dictionary containing 'input_ids', 'attention_mask', 'pixel_values'
@@ -75,19 +74,16 @@ class PaliGemmaModel(nn.Module):
             outputs = self.model(**inputs)
         else:
             outputs = self.model(inputs)
-        
-        # If we have a classification head, use it
+
         if self.classifier is not None:
-            # Use the last hidden state for classification
             hidden_states = outputs.hidden_states[-1] if hasattr(outputs, 'hidden_states') else outputs.logits
-            # Take the mean across sequence length for classification
             pooled_output = hidden_states.mean(dim=1)
             outputs.logits = self.classifier(pooled_output)
         
         return outputs
     
     def generate(self, inputs, **generation_kwargs):
-        """Generate text given image and text inputs.
+        """generate text given image and text inputs.
         
         Args:
             inputs: Dictionary containing model inputs
@@ -109,11 +105,11 @@ class PaliGemmaModel(nn.Module):
 def create_paligemma_model(model_name: str = "google/paligemma-3b-pt-224",
                           num_classes: int = None,
                           freeze_backbone: bool = False):
-    """Factory function to create a PaliGemma model.
+    """actory function to create a PaliGemma model.
     
     Args:
-        model_name: HuggingFace model name or path
-        num_classes: Number of classes for classification (None for generation)
+        model_name: HF model name or path
+        num_classes: number of classes for classification (none for generation)
         freeze_backbone: Whether to freeze backbone parameters
         
     Returns:
@@ -131,7 +127,7 @@ def create_paligemma_model(model_name: str = "google/paligemma-3b-pt-224",
     
     return model
 
-# For backward compatibility, keep a simple class similar to TinyVGG structure
+#for backward compatibility, keep a simple class similar to TinyVGG structure
 class SimplePaliGemma(nn.Module):
     """Simplified PaliGemma wrapper for basic usage."""
     

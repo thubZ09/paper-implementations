@@ -5,39 +5,38 @@ from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
 
-# Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from models.paligemma import PaliGemmaModel, create_paligemma_model, SimplePaliGemma
 
 class TestPaliGemmaModel:
-    """Test suite for PaliGemmaModel class."""
+    """test suite for PaliGemmaModel class."""
     
     @pytest.fixture
     def mock_config(self):
-        """Mock configuration for testing."""
+        """mock configuration for testing."""
         mock_config = Mock()
         mock_config.text_config.hidden_size = 2048
         return mock_config
     
     @pytest.fixture
     def mock_transformers_components(self):
-        """Mock transformers components to avoid loading actual models."""
+        """mock transformers components to avoid loading actual models."""
         with patch('models.paligemma.PaliGemmaForConditionalGeneration') as mock_model, \
              patch('models.paligemma.PaliGemmaConfig') as mock_config:
             
-            # Setup mock model instance
+            #setup mock model instance
             mock_instance = Mock()
             mock_instance.config.text_config.hidden_size = 2048
             
-            # Mock vision tower and language model for freezing tests
+            #mck vision tower nd language model for freezing tests
             mock_vision_tower = Mock()
             mock_vision_param = Mock()
             mock_vision_param.requires_grad = True
             mock_vision_tower.parameters.return_value = [mock_vision_param]
             mock_instance.vision_tower = mock_vision_tower
             
-            # Mock language model layers
+            #mock language model layers
             mock_layer = Mock()
             mock_layer_param = Mock()
             mock_layer_param.requires_grad = True
@@ -47,7 +46,7 @@ class TestPaliGemmaModel:
             mock_language_model.model.layers = [mock_layer, mock_layer, mock_layer]
             mock_instance.language_model = mock_language_model
             
-            # Mock outputs
+            #outputs
             mock_outputs = Mock()
             mock_outputs.logits = torch.randn(1, 10, 256000)
             mock_instance.return_value = mock_outputs
@@ -59,7 +58,7 @@ class TestPaliGemmaModel:
             yield mock_model, mock_config, mock_instance
     
     def test_model_initialization_success(self, mock_transformers_components):
-        """Test successful model initialization."""
+        """test successful model initialization."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
         model = PaliGemmaModel(model_name="test-model")
@@ -70,7 +69,7 @@ class TestPaliGemmaModel:
         mock_model.from_pretrained.assert_called_once()
     
     def test_model_initialization_with_classification(self, mock_transformers_components):
-        """Test model initialization with classification head."""
+        """test model initialization with classification head."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
         model = PaliGemmaModel(model_name="test-model", num_classes=10)
@@ -81,26 +80,25 @@ class TestPaliGemmaModel:
         assert model.classifier.out_features == 10
     
     def test_model_initialization_fallback(self, mock_transformers_components):
-        """Test model initialization fallback when from_pretrained fails."""
+        """test model initialization fallback when from_pretrained fails."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
-        # Make from_pretrained raise an exception
+        #mke from_pretrained raise an exception
         mock_model.from_pretrained.side_effect = Exception("Model not found")
         
         model = PaliGemmaModel(model_name="test-model")
         
-        # Should fall back to creating from config
         mock_config.from_pretrained.assert_called_once_with("test-model")
         mock_model.assert_called_once()
     
     def test_freeze_backbone_parameters(self, mock_transformers_components):
-        """Test freezing backbone parameters."""
+        """test freezing backbone parameters."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
         model = PaliGemmaModel(model_name="test-model", freeze_backbone=True)
         
-        # Check that freeze_backbone_parameters was called during init
-        # We can verify this by checking if vision tower parameters were accessed
+        #check that freeze_backbone_parameters was called during init
+        #we can verify this by checking if vision tower parameters were accessed
         mock_instance.vision_tower.parameters.assert_called()
         mock_instance.language_model.model.layers.__getitem__.assert_called()
     
@@ -118,7 +116,7 @@ class TestPaliGemmaModel:
         
         outputs = model(inputs)
         
-        # Should call the underlying model
+        #should call the underlying model
         mock_instance.assert_called_once_with(**inputs)
         assert outputs is not None
     
@@ -126,7 +124,7 @@ class TestPaliGemmaModel:
         """Test forward pass with classification head."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
-        # Mock outputs with hidden_states
+        #mock outputs with hidden_states
         mock_outputs = Mock()
         mock_outputs.logits = torch.randn(1, 10, 2048)
         mock_outputs.hidden_states = [torch.randn(1, 10, 2048)]
@@ -142,11 +140,11 @@ class TestPaliGemmaModel:
         
         outputs = model(inputs)
         
-        # Should use classifier
-        assert outputs.logits.shape == (1, 5)  # Classification logits
+        #should use classifier
+        assert outputs.logits.shape == (1, 5) 
     
     def test_generate_method(self, mock_transformers_components):
-        """Test generation method."""
+        """test generation method."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
         model = PaliGemmaModel(model_name="test-model")
@@ -162,12 +160,12 @@ class TestPaliGemmaModel:
         assert generated is not None
     
     def test_parameter_counting(self, mock_transformers_components):
-        """Test parameter counting methods."""
+        """test parameter counting methods."""
         mock_model, mock_config, mock_instance = mock_transformers_components
         
         model = PaliGemmaModel(model_name="test-model")
         
-        # Mock parameters
+        #mock parameters
         mock_param1 = Mock()
         mock_param1.numel.return_value = 100
         mock_param1.requires_grad = True
@@ -261,7 +259,6 @@ class TestModelIntegration:
     
     def test_model_shapes_consistency(self):
         """Test that model produces consistent output shapes."""
-        # This test would require actual model loading, so we'll mock it
         with patch('models.paligemma.PaliGemmaForConditionalGeneration') as mock_model:
             mock_instance = Mock()
             mock_outputs = Mock()
@@ -283,7 +280,7 @@ class TestModelIntegration:
             
             outputs = model(inputs)
             
-            # Check output shape
+            #check output shape
             expected_shape = (batch_size, seq_length, 256000)
             assert outputs.logits.shape == expected_shape
     
@@ -297,11 +294,11 @@ class TestModelIntegration:
             
             model = PaliGemmaModel(model_name="test-model")
             
-            # Test moving to device
+            #test moving to device
             device = torch.device('cpu')
             model.to(device)
             
-            # Verify underlying model was moved to device
+            #verify underlying model was moved to device
             mock_instance.to.assert_called()
 
 

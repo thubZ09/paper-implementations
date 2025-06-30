@@ -1,4 +1,3 @@
-#predict.py
 import torch
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -6,7 +5,6 @@ from transformers import PaliGemmaProcessor
 from typing import List, Dict, Optional
 import numpy as np
 
-# Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def predict_and_plot_image(
@@ -18,7 +16,7 @@ def predict_and_plot_image(
     device: torch.device = device,
     class_names: Optional[List[str]] = None
 ):
-    """Predicts on a target image with a PaliGemma model.
+    """predicts on a target image with a PaliGemma model.
 
     Args:
         model: A trained PaliGemma model.
@@ -30,10 +28,9 @@ def predict_and_plot_image(
         class_names: Optional list of class names for classification tasks.
     """
     
-    # Load and process image
+    #load img
     image = Image.open(image_path).convert('RGB')
-    
-    # Prepare inputs
+
     inputs = processor(
         text=prompt,
         images=image,
@@ -41,17 +38,13 @@ def predict_and_plot_image(
         padding=True
     )
     
-    # Move inputs to device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     
-    # Make sure model is on target device and in eval mode
     model.to(device)
     model.eval()
-    
-    # Generate prediction
+
     with torch.inference_mode():
         if hasattr(model, 'generate'):
-            # For generation tasks
             generated_ids = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
@@ -59,13 +52,11 @@ def predict_and_plot_image(
                 pad_token_id=processor.tokenizer.eos_token_id
             )
             
-            # Decode the generated text
             generated_text = processor.batch_decode(
                 generated_ids[:, inputs['input_ids'].shape[1]:], 
                 skip_special_tokens=True
             )[0]
-            
-            # Plot results
+
             plt.figure(figsize=(10, 6))
             plt.imshow(image)
             plt.title(f"Prompt: {prompt}\nGenerated: {generated_text}")
@@ -76,17 +67,16 @@ def predict_and_plot_image(
             return generated_text
             
         else:
-            # For classification tasks
+            #for classification
             logits = model(inputs).logits
             
             if class_names and logits.shape[-1] == len(class_names):
-                # Classification mode
+
                 probs = torch.softmax(logits, dim=-1)
                 pred_idx = torch.argmax(probs, dim=-1)
                 pred_class = class_names[pred_idx.item()]
                 confidence = probs.max().item()
                 
-                # Plot results
                 plt.figure(figsize=(10, 6))
                 plt.imshow(image)
                 plt.title(f"Predicted: {pred_class} (Confidence: {confidence:.3f})")
@@ -96,7 +86,7 @@ def predict_and_plot_image(
                 
                 return pred_class, confidence
             else:
-                # Text generation from logits
+
                 predicted_ids = torch.argmax(logits, dim=-1)
                 generated_text = processor.batch_decode(
                     predicted_ids, 
@@ -120,7 +110,7 @@ def batch_predict(
     max_new_tokens: int = 50,
     device: torch.device = device
 ) -> List[str]:
-    """Make batch predictions on multiple images.
+    """make batch predictions on multiple images.
     
     Args:
         model: A trained PaliGemma model.
@@ -131,11 +121,11 @@ def batch_predict(
         device: Target device to perform prediction on.
         
     Returns:
-        List of generated text responses.
+        list of generated text responses.
     """
     
     if len(image_paths) != len(prompts):
-        raise ValueError("Number of images and prompts must match")
+        raise ValueError("number of images and prompts must match")
     
     model.to(device)
     model.eval()
@@ -188,7 +178,7 @@ def evaluate_on_dataset(
     device: torch.device = device,
     max_samples: int = 100
 ) -> Dict[str, float]:
-    """Evaluate model performance on a dataset.
+    """evaluate model performance on a dataset.
     
     Args:
         model: A trained PaliGemma model.
@@ -198,7 +188,7 @@ def evaluate_on_dataset(
         max_samples: Maximum number of samples to evaluate.
         
     Returns:
-        Dictionary containing evaluation metrics.
+        dictionary containing evaluation metrics.
     """
     
     model.to(device)
@@ -213,20 +203,19 @@ def evaluate_on_dataset(
             if total_samples >= max_samples:
                 break
                 
-            # Move to device
             inputs = {k: v.to(device) for k, v in inputs.items()}
             targets = {k: v.to(device) for k, v in targets.items()}
             
-            # Forward pass
+            #forward pass
             outputs = model(inputs)
             
-            # Calculate loss
+            #calculate loss
             logits = outputs.logits
             batch_size, seq_len, vocab_size = logits.shape
             logits_flat = logits.view(-1, vocab_size)
             labels_flat = targets['input_ids'].view(-1)
             
-            # Mask padding tokens
+            #mask padding
             mask = labels_flat != -100
             if mask.any():
                 logits_masked = logits_flat[mask]
@@ -234,13 +223,11 @@ def evaluate_on_dataset(
                 
                 loss = torch.nn.functional.cross_entropy(logits_masked, labels_masked)
                 total_loss += loss.item()
-                
-                # Calculate accuracy
+
                 predictions = torch.argmax(logits_masked, dim=-1)
                 correct_predictions += (predictions == labels_masked).sum().item()
                 total_samples += labels_masked.numel()
-    
-    # Calculate metrics
+
     avg_loss = total_loss / len(dataloader)
     accuracy = correct_predictions / total_samples if total_samples > 0 else 0.0
     

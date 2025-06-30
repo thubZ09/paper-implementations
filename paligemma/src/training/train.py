@@ -7,26 +7,22 @@ from torch.utils.tensorboard import SummaryWriter
 import warnings
 warnings.filterwarnings("ignore")
 
-# Setup hyperparameters
-NUM_EPOCHS = 3  # Reduced for T4 GPU constraints
-BATCH_SIZE = 4  # Small batch size for large model
-LEARNING_RATE = 1e-5  # Lower learning rate for fine-tuning
-MODEL_NAME = "google/paligemma-3b-pt-224"  # Use the 224px version for T4
+#hyperparameters (T4 GPU) 
+NUM_EPOCHS = 3  
+BATCH_SIZE = 4  
+LEARNING_RATE = 1e-5  
+MODEL_NAME = "google/paligemma-3b-pt-224"  
 
-# Setup directories
-train_dir = "data/pizza_steak_sushi/train"  # Update this to your data path
-test_dir = "data/pizza_steak_sushi/test"    # Update this to your data path
+train_dir = "data/pizza_steak_sushi/train"  
+test_dir = "data/pizza_steak_sushi/test"    
 
-# Setup target device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
-# Memory optimization for T4
 if device == "cuda":
     torch.backends.cudnn.benchmark = True
     torch.cuda.empty_cache()
 
-# Initialize processor
 print("Loading PaliGemma processor...")
 try:
     processor = PaliGemmaProcessor.from_pretrained(MODEL_NAME)
@@ -35,26 +31,25 @@ except Exception as e:
     print("Please ensure you have access to the PaliGemma model.")
     exit(1)
 
-# Create DataLoaders with help from data_setup.py
 print("Creating data loaders...")
 train_dataloader, test_dataloader, class_names = data_setup.create_dataloaders(
     train_dir=train_dir,
     test_dir=test_dir,
     processor=processor,
     batch_size=BATCH_SIZE,
-    num_workers=2  # Reduced for stability
+    num_workers=2 
 )
 
 print(f"Classes found: {class_names}")
 print(f"Number of training batches: {len(train_dataloader)}")
 print(f"Number of testing batches: {len(test_dataloader)}")
 
-# Create model with help from model_builder.py
+#create model with help from model_builder.py
 print("Loading PaliGemma model...")
 try:
     model = model_builder.create_paligemma_model(
         model_name=MODEL_NAME,
-        freeze_backbone=True  # Freeze backbone for faster training on T4
+        freeze_backbone=True 
     )
 except Exception as e:
     print(f"Error loading model: {e}")
@@ -65,17 +60,14 @@ except Exception as e:
         device_map="auto"
     )
 
-# Move model to device
+#move model to device
 model = model.to(device)
 
-# Enable gradient checkpointing for memory efficiency
 if hasattr(model, 'gradient_checkpointing_enable'):
     model.gradient_checkpointing_enable()
 
-# Set up optimizer with different learning rates for different parts
 print("Setting up optimizer...")
 
-# Separate parameters for different learning rates
 backbone_params = []
 head_params = []
 
@@ -86,26 +78,23 @@ for name, param in model.named_parameters():
         else:
             head_params.append(param)
 
-# Create optimizer with different learning rates
 optimizer = torch.optim.AdamW([
-    {'params': backbone_params, 'lr': LEARNING_RATE * 0.1},  # Lower LR for backbone
-    {'params': head_params, 'lr': LEARNING_RATE}  # Higher LR for new layers
+    {'params': backbone_params, 'lr': LEARNING_RATE * 0.1},  #lower LR for backbone
+    {'params': head_params, 'lr': LEARNING_RATE}  #higher LR for new layers
 ], weight_decay=0.01)
 
-# Set loss function
+#set loss function
 loss_fn = torch.nn.CrossEntropyLoss(ignore_index=-100)
 
-# Create tensorboard writer
 writer = SummaryWriter(log_dir="runs/paligemma_experiment")
 
-# Print model info
 total_params = sum(p.numel() for p in model.parameters())
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print(f"Total parameters: {total_params:,}")
 print(f"Trainable parameters: {trainable_params:,}")
 print(f"Percentage trainable: {100 * trainable_params / total_params:.2f}%")
 
-# Learning rate scheduler
+#lr scheduler
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer, 
     T_max=NUM_EPOCHS,
@@ -115,7 +104,6 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
 print("Starting training...")
 print("=" * 50)
 
-# Start training with help from engine.py
 try:
     results = engine.train(
         model=model,
@@ -128,13 +116,12 @@ try:
         writer=writer
     )
     
-    # Update learning rate
+    #update lr
     scheduler.step()
     
     print("Training completed successfully!")
     print("=" * 50)
-    
-    # Print final results
+
     print("Final Results:")
     print(f"Final train loss: {results['train_loss'][-1]:.4f}")
     print(f"Final test loss: {results['test_loss'][-1]:.4f}")
@@ -148,17 +135,13 @@ except Exception as e:
     traceback.print_exc()
 
 finally:
-    # Cleanup
     writer.close()
     torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
-# Save the model with help from utils.py
 print("Saving model...")
 try:
-    # Create models directory if it doesn't exist
     os.makedirs("models", exist_ok=True)
     
-    # Save the model state dict (more memory efficient)
     model_save_path = "models/paligemma_finetuned.pth"
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -175,7 +158,6 @@ try:
     
     print(f"Model saved to: {model_save_path}")
     
-    # Also save just the model for easy loading
     if hasattr(utils, 'save_model'):
         utils.save_model(
             model=model,
@@ -188,17 +170,16 @@ except Exception as e:
 
 print("Training script completed!")
 
-# Optional: Display a sample prediction
+#optional\
 if len(test_dataloader) > 0:
     print("\nRunning sample prediction...")
     try:
         import predictions
-        
-        # Get a sample from test data
+
         sample_batch = next(iter(test_dataloader))
         sample_inputs, sample_targets = sample_batch
         
-        # Make a prediction (this would need an actual image path)
+        # make a prediction (this would need an actual image path)
         # predictions.predict_and_plot_image(
         #     model=model,
         #     processor=processor,

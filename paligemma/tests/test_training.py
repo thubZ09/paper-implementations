@@ -7,7 +7,6 @@ import sys
 import os
 from typing import Dict, List, Tuple
 
-# Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from training.trainer import train_step, test_step, train
@@ -24,12 +23,11 @@ class MockPaliGemmaModel(nn.Module):
         
     def forward(self, **kwargs):
         batch_size = kwargs.get('input_ids', kwargs.get('pixel_values')).shape[0]
-        seq_len = 10  # Fixed sequence length for testing
+        seq_len = 10  #fixed sequence length for testing
         
-        # Create mock logits
+        #create mock logits
         logits = torch.randn(batch_size, seq_len, self.vocab_size)
         
-        # Mock outputs object
         outputs = Mock()
         outputs.logits = logits
         return outputs
@@ -65,11 +63,10 @@ class TestTrainingModule:
         seq_len = 10
         vocab_size = 1000
         
-        # Create mock inputs and targets
         inputs_list = []
         targets_list = []
         
-        for _ in range(3):  # 3 batches
+        for _ in range(3): 
             inputs = {
                 'input_ids': torch.randint(0, vocab_size, (batch_size, seq_len)),
                 'attention_mask': torch.ones(batch_size, seq_len),
@@ -84,10 +81,8 @@ class TestTrainingModule:
     
     def test_train_step_basic_functionality(self, mock_model, mock_optimizer, mock_loss_fn, mock_dataloader, device):
         """Test basic functionality of train_step."""
-        # Move model to device
         mock_model.to(device)
         
-        # Run train step
         train_loss, train_acc = train_step(
             model=mock_model,
             dataloader=mock_dataloader,
@@ -96,7 +91,7 @@ class TestTrainingModule:
             device=device
         )
         
-        # Check that values are returned
+        #values are returnedChec
         assert isinstance(train_loss, float)
         assert isinstance(train_acc, float)
         assert train_loss >= 0
@@ -104,7 +99,7 @@ class TestTrainingModule:
     
     def test_train_step_model_in_training_mode(self, mock_model, mock_optimizer, mock_loss_fn, mock_dataloader, device):
         """Test that model is set to training mode during train_step."""
-        mock_model.eval()  # Set to eval mode first
+        mock_model.eval()  
         assert not mock_model.training
         
         train_step(
@@ -115,12 +110,10 @@ class TestTrainingModule:
             device=device
         )
         
-        # Model should be in training mode after train_step
         assert mock_model.training
     
     def test_train_step_gradient_computation(self, mock_model, mock_optimizer, mock_loss_fn, mock_dataloader, device):
         """Test that gradients are computed during train_step."""
-        # Get initial gradients (should be None)
         initial_grads = [param.grad for param in mock_model.parameters()]
         
         train_step(
@@ -131,10 +124,9 @@ class TestTrainingModule:
             device=device
         )
         
-        # Check that gradients have been computed
+        #checking gradients have been computed
         final_grads = [param.grad for param in mock_model.parameters()]
         
-        # At least some gradients should be non-None after training step
         assert any(grad is not None for grad in final_grads)
     
     def test_test_step_basic_functionality(self, mock_model, mock_loss_fn, mock_dataloader, device):
@@ -155,7 +147,7 @@ class TestTrainingModule:
     
     def test_test_step_model_in_eval_mode(self, mock_model, mock_loss_fn, mock_dataloader, device):
         """Test that model is set to eval mode during test_step."""
-        mock_model.train()  # Set to train mode first
+        mock_model.train()  
         assert mock_model.training
         
         test_step(
@@ -165,16 +157,14 @@ class TestTrainingModule:
             device=device
         )
         
-        # Model should be in eval mode after test_step
         assert not mock_model.training
     
     def test_test_step_no_gradient_computation(self, mock_model, mock_loss_fn, mock_dataloader, device):
         """Test that no gradients are computed during test_step."""
-        # Enable gradient computation initially
+        #enable gradient computation initially
         torch.set_grad_enabled(True)
         
         with patch('torch.inference_mode') as mock_inference_mode:
-            # Mock the context manager
             mock_context = MagicMock()
             mock_inference_mode.return_value.__enter__ = Mock(return_value=mock_context)
             mock_inference_mode.return_value.__exit__ = Mock(return_value=None)
@@ -186,11 +176,10 @@ class TestTrainingModule:
                 device=device
             )
             
-            # Verify that inference_mode was called
             mock_inference_mode.assert_called_once()
     
     def test_train_function_basic_functionality(self, mock_model, mock_optimizer, mock_loss_fn, mock_dataloader, device):
-        """Test basic functionality of the train function."""
+        """test basic functionality of the train function."""
         epochs = 2
         
         results = train(
@@ -203,14 +192,14 @@ class TestTrainingModule:
             device=device
         )
         
-        # Check results structure
+        #check results structure
         assert isinstance(results, dict)
         assert "train_loss" in results
         assert "train_acc" in results
         assert "test_loss" in results
         assert "test_acc" in results
         
-        # Check that results have correct length
+        #heck that results have correct length
         assert len(results["train_loss"]) == epochs
         assert len(results["train_acc"]) == epochs
         assert len(results["test_loss"]) == epochs
@@ -232,7 +221,6 @@ class TestTrainingModule:
             writer=mock_writer
         )
         
-        # Check that writer methods were called
         assert mock_writer.add_scalars.call_count >= epochs
         mock_writer.close.assert_called_once()
     
@@ -240,7 +228,6 @@ class TestTrainingModule:
         """Test that model is moved to correct device during training."""
         mock_model = MockPaliGemmaModel()
         
-        # Mock the to() method to track calls
         original_to = mock_model.to
         mock_model.to = Mock(side_effect=original_to)
         
@@ -254,12 +241,10 @@ class TestTrainingModule:
             device=device
         )
         
-        # Verify model.to(device) was called
         mock_model.to.assert_called_with(device)
     
     def test_masked_loss_calculation(self, mock_model, mock_optimizer, mock_loss_fn, device):
         """Test loss calculation with masked tokens."""
-        # Create dataloader with masked tokens
         batch_size = 2
         seq_len = 10
         vocab_size = 1000
@@ -270,15 +255,14 @@ class TestTrainingModule:
             'pixel_values': torch.randn(batch_size, 3, 224, 224)
         }
         
-        # Create targets with some -100 (ignored) tokens
+        #create targets with some -100 (ignored) tokens
         targets = {
             'input_ids': torch.randint(0, vocab_size, (batch_size, seq_len))
         }
-        targets['input_ids'][0, :3] = -100  # Mask first 3 tokens of first example
+        targets['input_ids'][0, :3] = -100  #mask first 3 tokens of first example
         
         mock_dataloader = [(inputs, targets)]
         
-        # This should not raise an error
         train_loss, train_acc = train_step(
             model=mock_model,
             dataloader=mock_dataloader,
@@ -294,7 +278,6 @@ class TestTrainingModule:
         """Test handling of empty dataloader."""
         empty_dataloader = []
         
-        # This should handle empty dataloader gracefully
         train_loss, train_acc = train_step(
             model=mock_model,
             dataloader=empty_dataloader,
@@ -303,7 +286,6 @@ class TestTrainingModule:
             device=device
         )
         
-        # Should return 0 for empty dataloader
         assert train_loss == 0
         assert train_acc == 0
     
@@ -320,7 +302,6 @@ class TestTrainingModule:
                 device=device
             )
             
-            # Memory cleanup should be called at least once
             assert mock_empty_cache.call_count > 0
     
     def test_different_batch_sizes(self, mock_model, mock_optimizer, mock_loss_fn, device):
@@ -365,7 +346,6 @@ class TestTrainingModule:
             device=device
         )
         
-        # Verify optimizer methods were called
         assert mock_optimizer.zero_grad.call_count >= len(mock_dataloader)
         assert mock_optimizer.step.call_count >= len(mock_dataloader)
     
@@ -381,7 +361,6 @@ class TestTrainingModule:
             device=device
         )
         
-        # Loss function should be called for each batch
         assert mock_loss_fn.call_count >= len(mock_dataloader)
     
     @pytest.mark.parametrize("epochs", [1, 2, 5])
@@ -397,20 +376,18 @@ class TestTrainingModule:
             device=device
         )
         
-        # Check that results have correct length for each epoch count
         for key in ["train_loss", "train_acc", "test_loss", "test_acc"]:
             assert len(results[key]) == epochs
     
     def test_error_handling_in_train_step(self, mock_optimizer, mock_loss_fn, mock_dataloader, device):
         """Test error handling when model forward pass fails."""
-        # Create a model that raises an exception
         class BrokenModel(nn.Module):
             def forward(self, **kwargs):
                 raise RuntimeError("Model forward pass failed")
         
         broken_model = BrokenModel()
         
-        # This should raise an exception
+        #raising an exception
         with pytest.raises(RuntimeError, match="Model forward pass failed"):
             train_step(
                 model=broken_model,
@@ -432,14 +409,13 @@ class TestTrainingModule:
             'pixel_values': torch.randn(batch_size, 3, 224, 224)
         }
         
-        # Create targets with all -100 (ignored) tokens
         targets = {
             'input_ids': torch.full((batch_size, seq_len), -100)
         }
         
         mock_dataloader = [(inputs, targets)]
         
-        # This should handle the case where no tokens are used for loss
+        #handle the case where no tokens are used for loss
         train_loss, train_acc = train_step(
             model=mock_model,
             dataloader=mock_dataloader,
@@ -448,11 +424,11 @@ class TestTrainingModule:
             device=device
         )
         
-        # Should return some values even with all masked tokens
+        #should return some values even with all masked tokens
         assert isinstance(train_loss, float)
         assert isinstance(train_acc, float)
 
 
 if __name__ == "__main__":
-    # Run tests if script is executed directly
+    #run tests if script is executed directly
     pytest.main([__file__, "-v"])
