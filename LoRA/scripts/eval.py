@@ -1,7 +1,3 @@
-"""
-Evaluation script for LoRA fine-tuned models.
-
-"""
 import os
 import sys
 import torch

@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 
 class DataCollatorForLanguageModeling:
     """data collator for language modeling tasks."""
-    
+     
     def __init__(
         self,
         tokenizer: AutoTokenizer,

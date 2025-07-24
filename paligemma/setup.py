@@ -1,7 +1,3 @@
-"""
-setup script for this implementation
-"""
-
 from setuptools import setup, find_packages
 import os
 

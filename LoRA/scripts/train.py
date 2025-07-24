@@ -1,7 +1,3 @@
-"""
-training script for LoRA fine-tuning on Colab T4.
-
-"""
 import os
 import torch
 import torch.nn as nn
